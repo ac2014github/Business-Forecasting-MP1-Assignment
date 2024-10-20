@@ -1,0 +1,103 @@
+---
+title: "Assignment MP1"
+author: "Adrian Chan"
+date: "2024-10-17"
+output: html_document
+---
+
+```{r}
+
+library(fpp)
+library(fpp2)
+library(readr)
+
+flight_volume<-read.csv("flightVolume.csv")
+flight_volume
+
+departures_ts<-ts(flight_volume$reslong,start=c(1976,1),frequency=12)
+
+head(departures_ts)
+departures_ts
+
+plot(departures_ts,main="Departures",ylab="Total",xlab="Year")
+
+# I think that the data will have a seasonal pattern
+
+Acf(departures_ts)
+
+dep_decomp<-stl(departures_ts,s.window="periodic")
+plot(dep_decomp)
+attributes(dep_decomp)
+
+# Will use RMSE to determine accuracy
+
+mean_forecast<-meanf(departures_ts,12)
+plot(mean_forecast)
+# This forecasting model takes the average of the historical data and uses it to predict the departures for the next 12 months.
+
+naive_forecast<-naive(departures_ts,12)
+plot(naive_forecast)
+# This model takes the most recent departure value and uses this value for the forecast for the next 12 months.
+
+es_forecast<-ets(departures_ts)
+plot(es_forecast)
+forecast_departures<-forecast(es_forecast,12)
+plot(forecast_departures)
+# This model uses exponential smoothing to predict the next 12 months of departures putting more weight on the most recent departure values.
+
+HW_forecast<-HoltWinters(departures_ts)
+plot(HW_forecast)
+# The Holts Winters model takes into consideration the seasonal trend when predicting the next 12 months of departures
+
+HW_model<-HoltWinters(departures_ts)
+HW_forecast<-forecast(HW_model,12)
+plot(HW_forecast)
+
+seasadj(dep_decomp)
+ 
+
+plot(departures_ts)
+lines(seasadj(dep_decomp),col="blue")
+# This is a decomposition model that helps to understand the data and illustrates the trends that are evident. It aids in choosing which forecasting method to use.
+
+f_stl<-forecast(dep_decomp)
+
+f_stl<-forecast(dep_decomp,h=12)
+f_stl
+
+plot(f_stl)
+# This model also has the same effect, as the data helps to demonstrate the trend and determine which model should be used to forecast the next 12 months. 
+
+decomp_dep<-decompose(departures_ts)
+attributes(decomp_dep)
+
+seasadj(decomp_dep)
+
+accuracy(mean_forecast)
+
+accuracy(naive_forecast)
+
+accuracy(es_forecast)
+
+accuracy(HW_forecast)
+
+accuracy(f_stl)
+
+# From the accuracy measure RMSE, the model rank is: 1. exponential smoothing; 2. HoltsWinters; 3. Decomposition; 4. Naive; 5. Mean
+
+# I will be using the Naive forecasting method as a baseline and the Exponential Smoothing and HoltsWinters models to get a more accurate forecast of the departures.
+
+forecast_naive<-forecast(naive_forecast,12)
+print(forecast_naive)
+
+forecast_ets<-forecast(es_forecast,12)
+print(forecast_ets)
+
+forecast_HW<-forecast(HW_forecast,12)
+print(forecast_HW)
+
+# I am confident with these forecasts because Naive is just a benchmark and a baseline for my Exponential Smoothing and HoltsWinters forecasts. The latter 2 forecasts are the ones that have the lowest RMSEs compared to the other models when measuring accuracy. Both of them are taking into consideration the seasonal trend that is evident from the Acf.
+
+
+```
+
